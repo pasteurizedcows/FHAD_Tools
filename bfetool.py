@@ -289,7 +289,21 @@ class CreateBFEs(object):
                         # See if we have BFEs for that reach
                         if self.rs.reach_exists(channel[1], channel[2]):
                             current_reach = self.rs.get_reach(channel[1], channel[2])
+                        elif channel[2].isdigit():
+                            try:
+                            # sometimes a reach will be named as an integer with a 0 in front
+                            # when this is copy-pasted to a csv, the 0 will be removed
+                            # to rectify this, add remove the 0 from the reach name to the front of the string
+                                if self.rs.reach_exists(channel[1], '{}'.format(int(channel[2]))):
+                                    current_reach = self.rs.get_reach(channel[1], '{}'.format(int(channel[2])))
+                                else:
+                                    arcpy.AddMessage('The reach {} for river {} was not found or cannot be converted to an int.'.format(channel[2], channel[1]))
+                                    continue
+                            except ValueError:
+                                arcpy.AddMessage('The reach {} for river {} was not found or cannot be converted to an int.'.format(channel[2], channel[1]))
+                                continue
                         else:
+                            arcpy.AddMessage('The reach {} for river {} was not found or cannot be converted to an int.'.format(channel[2], channel[1]))
                             continue
                         # Got BFEs, lets make some points!
                         channel_geo = channel[0]

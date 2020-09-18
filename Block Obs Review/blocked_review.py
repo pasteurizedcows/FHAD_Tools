@@ -246,9 +246,16 @@ def obstruction_review(geofile, xs_shape_file, xs_id_field, river_field, reach_f
     :param outfile: name of output shape file
     :return: nothing
     """
+
+    # the field names cannot have spaces in them in ArcGIS. Replace spaces with "_" if they exist for the new shapefile
+    # use the one with spaces with parsing through the original shapefile
+    new_xs_id_field = xs_id_field.replace(' ', '_')
+    new_river_field = river_field.replace(' ', '_')
+    new_reach_field = reach_field.replace(' ', '_')
+
     # Setup output shapefile
     spatial_reference = arcpy.Describe(xs_shape_file).spatialReference
-    _setup_output_shapefile(outfile, xs_id_field, river_field, reach_field, spatial_reference)
+    _setup_output_shapefile(outfile, new_xs_id_field, new_river_field, new_reach_field, spatial_reference)
     message('Importing HEC-RAS geometry...')
     ras_geo = prg.ParseRASGeo(geofile)
     message('Done.\nCreating blocked obstruction review lines...')
@@ -257,7 +264,7 @@ def obstruction_review(geofile, xs_shape_file, xs_id_field, river_field, reach_f
     num_xs_gis = 0
     num_xs_processed = 0
     with arcpy.da.SearchCursor(xs_shape_file, ['SHAPE@', xs_id_field, river_field, reach_field]) as xs_cursor:
-        with arcpy.da.InsertCursor(outfile, ['SHAPE@', xs_id_field, river_field, reach_field,
+        with arcpy.da.InsertCursor(outfile, ['SHAPE@', new_xs_id_field, new_river_field, new_reach_field,
                                              BLOCKED_FIELD, BLOCKED_STATUS]) as out_cursor:
             for xs in xs_cursor:
                 num_xs_gis += 1

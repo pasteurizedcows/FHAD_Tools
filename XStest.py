@@ -38,10 +38,19 @@ class CrossSectionTest(bfetool.CreateBFEs):
                     self.channel_reach_field, bfetool.BFE_ELEV_FIELD, bfetool.BFE_STA_FIELD]) as XS_cursor:
                     for channel in channel_cursor:
                         # See if we have XSs for that reach
-                        if self.rs.reach_exists(channel[1], channel[2]):
-                            current_reach = self.rs.get_reach(channel[1], channel[2])
-                        else:
-                            continue
+                        elif channel[2].isdigit():
+                            try:
+                            # sometimes a reach will be named as an integer with a 0 in front
+                            # when this is copy-pasted to a csv, the 0 will be removed
+                            # to rectify this, add remove the 0 from the reach name to the front of the string
+                                if self.rs.reach_exists(channel[1], '{}'.format(int(channel[2]))):
+                                    current_reach = self.rs.get_reach(channel[1], '{}'.format(int(channel[2])))
+                                else:
+                                    arcpy.AddMessage('The reach {} for river {} was not found or cannot be converted to an int.'.format(channel[2], channel[1]))
+                                    continue
+                            except ValueError:
+                                arcpy.AddMessage('The reach {} for river {} was not found or cannot be converted to an int.'.format(channel[2], channel[1]))
+                                continue
                         # Got XSs, lets make some points!
                         channel_geo = channel[0]
                         for current_XS in current_reach.cross_sections:
