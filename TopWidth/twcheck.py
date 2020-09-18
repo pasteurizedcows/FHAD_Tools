@@ -95,7 +95,12 @@ def _assign_intersect_to_xs(cross_sections, xs_id_field, all_intersect_pts):
     :param all_intersect_pts:
     :return:
     """
-    with arcpy.da.SearchCursor(all_intersect_pts, ['SHAPE@', xs_id_field]) as cursor:
+
+    # there can be no spaces in the field name. ArcGIS automatically replaces them
+    # with underscores, so they are replaced here to find the appropriate field
+    new_xs_id_field = xs_id_field.replace(' ', '_')
+
+    with arcpy.da.SearchCursor(all_intersect_pts, ['SHAPE@', new_xs_id_field]) as cursor:
         for row in cursor:
             for xs in cross_sections:
                 if xs.xs_id == row[1]:
@@ -114,7 +119,12 @@ def _export_tw_points_to_shapefile(cross_sections, xs_id_field, out_file):
     :param out_file:
     :return:
     """
-    with arcpy.da.InsertCursor(out_file, ['SHAPE@', xs_id_field, ERR_FIELD]) as cursor:
+
+    # there can be no spaces in the field name. ArcGIS automatically replaces them
+    # with underscores, so they are replaced here to find the appropriate field
+    new_xs_id_field = xs_id_field.replace(' ', '_')
+    
+    with arcpy.da.InsertCursor(out_file, ['SHAPE@', new_xs_id_field, ERR_FIELD]) as cursor:
         for xs in cross_sections:
             if xs.tw_points is not None:
                 line = _list_to_arcpy_polyline(xs.tw_points)
