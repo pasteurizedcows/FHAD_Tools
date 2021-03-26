@@ -322,11 +322,12 @@ def iefa_review(geofile, xs_shape_file, xs_id_field, river_field, reach_field, o
 
                 num_xs_processed += 1
                 for iefa_line in iefa_lines:
+                    # only create out IEFA lines that had IEFA, not ones that don't have IEFA
                     if iefa_line[1] == 0:
                         status = 'no'
                     else:
                         status = 'yes'
-                    out_cursor.insertRow([iefa_line[0], xs_id, river, reach, iefa_line[1], status])
+                        out_cursor.insertRow([iefa_line[0], xs_id, river, reach, iefa_line[1], status])
 
     warn('There are ' + str(num_xs_ras_geo) + ' cross sections in the HEC-RAS geometry and ' + str(num_xs_gis) + \
          ' cross sections in the cross section shape file. ' + str(num_xs_processed) + ' cross sections were' + \

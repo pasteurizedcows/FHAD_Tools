@@ -308,11 +308,13 @@ def obstruction_review(geofile, xs_shape_file, xs_id_field, river_field, reach_f
 
                 num_xs_processed += 1
                 for blocked_line in blocked_lines:
+                    # only write out blocked obstructions that exist
+                    # do not create them if they don't exist
                     if blocked_line[1] == 0:
                         status = 'no'
                     else:
                         status = 'yes'
-                    out_cursor.insertRow([blocked_line[0], xs_id, river, reach, blocked_line[1], status])
+                        out_cursor.insertRow([blocked_line[0], xs_id, river, reach, blocked_line[1], status])
 
     warn('There are ' + str(num_xs_ras_geo) + ' cross sections in the HEC-RAS geometry and ' + str(num_xs_gis) +
          ' cross sections in the cross section shape file. Obstructions were created at ' + str(num_xs_processed) +
