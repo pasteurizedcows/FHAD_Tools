@@ -15,6 +15,7 @@ import parserasgeo as prg
 
 IEFA_FIELD = 'IEFA_El'
 IEFA_STATUS = 'IEFA'
+PERMANENT_FIELD = 'PERMANENT'
 FIELD_LENGTH = 50
 DEBUG = False
 
@@ -76,6 +77,7 @@ def _setup_output_shapefile(filename, xs_id_field, river_field, reach_field, spa
         arcpy.AddField_management(filename, reach_field, 'TEXT', field_length=FIELD_LENGTH)
         arcpy.AddField_management(filename, IEFA_FIELD, 'FLOAT', '')
         arcpy.AddField_management(filename, IEFA_STATUS, 'TEXT', field_length=FIELD_LENGTH)
+        arcpy.AddField_management(filename, PERMANENT_FIELD, 'TEXT', field_length = 3)
 
     except Exception as e:
         error(str(e))
@@ -246,7 +248,6 @@ def _dist(point1, point2):
     """
     return ((point1.X - point2.X)**2 + (point1.Y - point2.Y)**2)**0.5
 
-
 def iefa_review(geofile, xs_shape_file, xs_id_field, river_field, reach_field, outfile, rnd=False, digits=0):
     """
     Combines HEC-RAS geometry file and cross section shapefile to create polylines representing areas of consistent
@@ -280,7 +281,7 @@ def iefa_review(geofile, xs_shape_file, xs_id_field, river_field, reach_field, o
     num_xs_processed = 0
     with arcpy.da.SearchCursor(xs_shape_file, ['SHAPE@', xs_id_field, river_field, reach_field]) as xs_cursor:
         with arcpy.da.InsertCursor(outfile, ['SHAPE@', new_xs_id_field, new_river_field, new_reach_field,
-                                             IEFA_FIELD, IEFA_STATUS]) as out_cursor:
+                                             IEFA_FIELD, IEFA_STATUS, PERMANENT_FIELD]) as out_cursor:
             for xs in xs_cursor:
                 num_xs_gis += 1
                 geo = xs[0]
@@ -320,6 +321,13 @@ def iefa_review(geofile, xs_shape_file, xs_id_field, river_field, reach_field, o
                          'GIS feature length. Ignored.')
                     continue
 
+                # get the list of the IEFA permanence from the geo xs
+                # use that to determine the permanence of each existant IEFA line
+                # a unique iefa index has to be created because iefa.iefa_permanence
+                # only includes existing IEFA (i.e. iefa_line[1] != 0)
+                iefa_permanence = geo_xs.iefa.iefa_permanence
+                iefa_index = 0
+
                 num_xs_processed += 1
                 for iefa_line in iefa_lines:
                     # only create out IEFA lines that had IEFA, not ones that don't have IEFA
@@ -327,7 +335,13 @@ def iefa_review(geofile, xs_shape_file, xs_id_field, river_field, reach_field, o
                         status = 'no'
                     else:
                         status = 'yes'
-                        out_cursor.insertRow([iefa_line[0], xs_id, river, reach, iefa_line[1], status])
+                        if iefa_permanence[iefa_index] == 0:
+                            permanence = 'No'
+                        else:
+                            permanence = 'Yes'
+                        iefa_index += 1
+
+                        out_cursor.insertRow([iefa_line[0], xs_id, river, reach, iefa_line[1], status, permanence])
 
     warn('There are ' + str(num_xs_ras_geo) + ' cross sections in the HEC-RAS geometry and ' + str(num_xs_gis) + \
          ' cross sections in the cross section shape file. ' + str(num_xs_processed) + ' cross sections were' + \
