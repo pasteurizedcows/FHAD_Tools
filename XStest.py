@@ -38,6 +38,8 @@ class CrossSectionTest(bfetool.CreateBFEs):
                     self.channel_reach_field, bfetool.BFE_ELEV_FIELD, bfetool.BFE_STA_FIELD]) as XS_cursor:
                     for channel in channel_cursor:
                         # See if we have XSs for that reach
+                        if self.rs.reach_exists(channel[1], channel[2]):
+                            current_reach = self.rs.get_reach(channel[1], channel[2])
                         elif channel[2].isdigit():
                             try:
                             # sometimes a reach will be named as an integer with a 0 in front
